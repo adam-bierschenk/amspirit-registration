@@ -18,12 +18,17 @@ function parseBasicAuth(
   header: string | null
 ): { user: string; pass: string } | null {
   if (!header) return null;
-  const [scheme, encoded] = header.split(" ");
-  if (scheme !== "Basic" || !encoded) return null;
+
+  const spaceIdx = header.indexOf(" ");
+  if (spaceIdx < 0) return null;
+
+  const scheme = header.slice(0, spaceIdx);
+  const encoded = header.slice(spaceIdx + 1).trim();
+  if (scheme.toLowerCase() !== "basic" || !encoded) return null;
 
   let decoded = "";
   try {
-    decoded = Buffer.from(encoded, "base64").toString("utf8");
+    decoded = atob(encoded);
   } catch {
     return null;
   }
@@ -56,5 +61,5 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/api/admin/:path*"]
+  matcher: ["/admin", "/admin/:path*", "/api/admin/:path*"]
 };
