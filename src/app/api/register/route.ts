@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { appendRegistrations } from "@/lib/csv";
+import { appendRegistrations } from "@/lib/registrations";
 
 type Attendee = { firstName: string; lastName: string };
 
@@ -116,7 +116,7 @@ export async function POST(req: Request) {
     });
   } catch {
     return NextResponse.json(
-      { ok: false, error: "Failed to write registration. Check server logs." },
+      { ok: false, error: "Failed to save registration. Check server logs." },
       { status: 500 }
     );
   }

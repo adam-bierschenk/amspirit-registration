@@ -294,9 +294,6 @@ export default function Page() {
             </button>
           </div>
 
-          {/* <div className="text-xs text-slate-500">
-            CSV output location: <span className="font-mono">/data/registrations.csv</span>
-          </div> */}
         </form>
       </div>
     </main>

@@ -1,16 +1,25 @@
-import { parseCsv, readCsvText, getCsvPath } from "@/lib/csv";
+import { listRecentRegistrations, type RegistrationRecord } from "@/lib/registrations";
 
-function formatHeaderLabel(key: string): string {
-  return key.replaceAll("_", " ");
-}
+export const dynamic = "force-dynamic";
+
+const COLUMNS: Array<{ key: keyof RegistrationRecord; label: string }> = [
+  { key: "timestamp", label: "timestamp" },
+  { key: "chapter", label: "chapter" },
+  { key: "director", label: "director" },
+  { key: "registrant_email", label: "registrant email" },
+  { key: "attendee_first_name", label: "attendee first name" },
+  { key: "attendee_last_name", label: "attendee last name" }
+];
 
 export default async function AdminPage() {
-  const text = await readCsvText();
-  const records = parseCsv(text);
-  const csvPath = getCsvPath();
+  let latest: RegistrationRecord[] = [];
+  let loadError: string | null = null;
 
-  const latest = records.slice(-200).reverse();
-  const columns = latest.length > 0 ? Object.keys(latest[0]) : [];
+  try {
+    latest = await listRecentRegistrations(200);
+  } catch {
+    loadError = "Failed to load registrations from Supabase. Check server logs.";
+  }
 
   return (
     <main className="mx-auto max-w-6xl p-4 sm:p-8">
@@ -20,7 +29,7 @@ export default async function AdminPage() {
             Admin — Registrations
           </h1>
           <p className="mt-2 text-sm text-slate-600">
-            CSV file: <span className="font-mono">{csvPath}</span>
+            Data source: <span className="font-mono">Supabase ({process.env.SUPABASE_REGISTRATIONS_TABLE ?? "registrations"})</span>
           </p>
 
           <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -37,7 +46,11 @@ export default async function AdminPage() {
         </div>
 
         <div className="p-6 sm:p-10">
-          {latest.length === 0 ? (
+          {loadError ? (
+            <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+              {loadError}
+            </div>
+          ) : latest.length === 0 ? (
             <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
               No registrations yet.
             </div>
@@ -46,12 +59,12 @@ export default async function AdminPage() {
               <table className="min-w-full text-left text-sm">
                 <thead className="bg-slate-50 text-slate-700">
                   <tr>
-                    {columns.map((c) => (
+                    {COLUMNS.map((column) => (
                       <th
-                        key={c}
+                        key={column.key}
                         className="whitespace-nowrap px-4 py-3 font-semibold"
                       >
-                        {formatHeaderLabel(c)}
+                        {column.label}
                       </th>
                     ))}
                   </tr>
@@ -59,12 +72,12 @@ export default async function AdminPage() {
                 <tbody className="divide-y divide-slate-200">
                   {latest.map((r, idx) => (
                     <tr key={idx} className="bg-white">
-                      {columns.map((c) => (
+                      {COLUMNS.map((column) => (
                         <td
-                          key={c}
+                          key={column.key}
                           className="whitespace-nowrap px-4 py-3 text-slate-800"
                         >
-                          {r[c] ?? ""}
+                          {r[column.key] ?? ""}
                         </td>
                       ))}
                     </tr>

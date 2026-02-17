@@ -1,26 +1,22 @@
 import { NextResponse } from "next/server";
-import { promises as fs } from "node:fs";
-import { getCsvPath, ensureCsvExists } from "@/lib/csv";
+import { listAllRegistrations, registrationsToCsv } from "@/lib/registrations";
 
 export async function GET() {
-  await ensureCsvExists();
-  const csvPath = getCsvPath();
-
-  let data: Buffer;
   try {
-    data = await fs.readFile(csvPath);
+    const registrations = await listAllRegistrations();
+    const csvText = registrationsToCsv(registrations);
+
+    return new NextResponse(csvText, {
+      status: 200,
+      headers: {
+        "Content-Type": "text/csv; charset=utf-8",
+        "Content-Disposition": 'attachment; filename="registrations.csv"'
+      }
+    });
   } catch {
     return NextResponse.json(
-      { ok: false, error: "CSV not found." },
-      { status: 404 }
+      { ok: false, error: "Failed to generate CSV from Supabase data." },
+      { status: 500 }
     );
   }
-
-  return new NextResponse(data, {
-    status: 200,
-    headers: {
-      "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": 'attachment; filename="registrations.csv"'
-    }
-  });
 }
